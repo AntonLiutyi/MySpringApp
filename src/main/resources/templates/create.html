@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Create new user</title>
+</head>
+<body>
+<form method="post" action="/user/create" th:object="${user}">
+    <label for="firstName">First name</label>
+    <input type="text" name="firstName" id="firstName" th:field="*{firstName}"/>
+
+    <br>
+
+    <label for="lastName">Last name</label>
+    <input type="text" name="lastName" id="lastName" th:field="*{lastName}"/>
+
+    <br>
+
+    <label for="gender">Gender</label>
+    <select id="gender" th:field="*{gender}">
+        <option th:each="gender : ${T(com.example.demo.models.User.Gender).values()}"
+                th:value="${gender}"
+                th:text="${gender}">
+        </option>
+    </select>
+
+    <br>
+
+    <input type="submit" value="Create user"/>
+</form>
+</body>
+</html>
