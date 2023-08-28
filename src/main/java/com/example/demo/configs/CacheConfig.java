@@ -1,5 +1,7 @@
 package com.example.demo.configs;
 
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.cache.CacheType;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.annotation.Bean;
@@ -14,6 +16,9 @@ import org.springframework.data.redis.serializer.RedisSerializationContext;
 @EnableCaching
 public class CacheConfig {
 
+    @Value("${spring.cache.type}")
+    private CacheType cacheType;
+
     @Bean
     public CacheManager cacheManager(RedisConnectionFactory redisConnectionFactory) {
         RedisSerializationContext.SerializationPair<Object> jsonSerializer =
@@ -25,5 +30,10 @@ public class CacheConfig {
         return RedisCacheManager.builder(redisConnectionFactory)
                 .cacheDefaults(cacheConfiguration)
                 .build();
+    }
+
+    @Bean
+    public boolean isCacheEnabled() {
+        return cacheType != CacheType.NONE;
     }
 }
