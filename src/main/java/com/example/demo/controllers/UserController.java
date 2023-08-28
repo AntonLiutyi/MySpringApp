@@ -2,6 +2,7 @@ package com.example.demo.controllers;
 
 import com.example.demo.models.User;
 import com.example.demo.services.UserService;
+import com.example.demo.services.impl.UserServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Controller;
@@ -47,6 +48,14 @@ public class UserController {
     @PostMapping("/user/delete/{id}")
     public String deleteUser(@PathVariable Long id) {
         userService.deleteUser(id);
+        return "redirect:/";
+    }
+
+    @GetMapping("/users/reload")
+    public String reloadUsers() {
+        if (userService instanceof UserServiceImpl) {
+            ((UserServiceImpl) userService).reloadUsers();
+        }
         return "redirect:/";
     }
 }
