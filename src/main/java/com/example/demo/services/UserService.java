@@ -8,7 +8,7 @@ public interface UserService {
 
     List<User> listUsers();
 
-    void saveUser(User user);
+    User saveUser(User user);
 
     void deleteUser(Long id);
 }
