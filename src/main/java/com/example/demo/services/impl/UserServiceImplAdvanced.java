@@ -30,8 +30,8 @@ public class UserServiceImplAdvanced implements UserService {
     }
 
     @Override
-    public void saveUser(User user) {
-        userRepository.save(user);
+    public User saveUser(User user) {
+        return userRepository.save(user);
     }
 
     public void saveUsers(User... users) {
