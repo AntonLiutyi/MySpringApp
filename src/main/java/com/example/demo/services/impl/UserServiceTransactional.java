@@ -14,7 +14,7 @@ import java.util.stream.Collectors;
 @Service
 @Transactional
 @RequiredArgsConstructor
-public class UserServiceImplAdvanced implements UserService {
+public class UserServiceTransactional implements UserService {
 
     private final UserRepository userRepository;
 

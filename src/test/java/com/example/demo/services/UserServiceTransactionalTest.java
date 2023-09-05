@@ -3,7 +3,7 @@ package com.example.demo.services;
 import com.example.demo.models.User;
 import com.example.demo.models.User.Gender;
 import com.example.demo.repositories.UserRepository;
-import com.example.demo.services.impl.UserServiceImplAdvanced;
+import com.example.demo.services.impl.UserServiceTransactional;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -26,13 +26,13 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 
 @SpringBootTest
 @AutoConfigureTestDatabase
-public class UserServiceImplAdvancedTest {
+public class UserServiceTransactionalTest {
 
     @Autowired
     private UserRepository userRepository;
 
     @Autowired
-    private UserServiceImplAdvanced userService;
+    private UserServiceTransactional userService;
 
     private final User userToSave1 = new User("Alice", "Smith", Gender.FEMALE);
     private final User userToSave2 = new User("Bob", "Johnson", Gender.MALE);
