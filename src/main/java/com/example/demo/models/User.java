@@ -6,6 +6,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.io.Serializable;
+import java.util.Objects;
 
 @Entity
 @Table(name = "users")
@@ -30,6 +31,26 @@ public class User implements Serializable {
 
     @Column(name = "email")
     private String email;
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+        User otherUser = (User) obj;
+        return Objects.equals(id, otherUser.id) &&
+                Objects.equals(firstName, otherUser.firstName) &&
+                Objects.equals(lastName, otherUser.lastName) &&
+                gender == otherUser.gender;
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, firstName, lastName, gender);
+    }
 
     public User(String firstName, String lastName, Gender gender) {
         this.firstName = firstName;
