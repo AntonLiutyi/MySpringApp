@@ -47,6 +47,11 @@ public class User implements Serializable {
                 gender == otherUser.gender;
     }
 
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, firstName, lastName, gender);
+    }
+
     public User(String firstName, String lastName, Gender gender) {
         this.firstName = firstName;
         this.lastName = lastName;
