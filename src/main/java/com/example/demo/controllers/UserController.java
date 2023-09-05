@@ -2,7 +2,7 @@ package com.example.demo.controllers;
 
 import com.example.demo.models.User;
 import com.example.demo.services.UserService;
-import com.example.demo.services.impl.UserServiceImpl;
+import com.example.demo.services.impl.UserServiceRedis;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Controller;
@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 @RequiredArgsConstructor
 public class UserController {
 
-    @Qualifier("userServiceImpl")
+    @Qualifier("userServiceRedis")
     private final UserService userService;
 
     @GetMapping("/")
@@ -53,8 +53,8 @@ public class UserController {
 
     @GetMapping("/users/reload")
     public String reloadUsers() {
-        if (userService instanceof UserServiceImpl) {
-            ((UserServiceImpl) userService).reloadUsers();
+        if (userService instanceof UserServiceRedis) {
+            ((UserServiceRedis) userService).reloadUsers();
         }
         return "redirect:/";
     }
