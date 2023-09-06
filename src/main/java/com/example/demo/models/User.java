@@ -13,7 +13,7 @@ import java.util.Objects;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class User implements Serializable {
+public class User implements Cloneable, Serializable {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -50,6 +50,12 @@ public class User implements Serializable {
     @Override
     public int hashCode() {
         return Objects.hash(id, firstName, lastName, gender);
+    }
+
+    @Override
+    @SuppressWarnings("MethodDoesntCallSuperMethod")
+    public User clone() {
+        return new User(id, firstName, lastName, gender, email);
     }
 
     public User(String firstName, String lastName, Gender gender) {
