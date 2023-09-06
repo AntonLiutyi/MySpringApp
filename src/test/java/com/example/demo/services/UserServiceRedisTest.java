@@ -27,7 +27,6 @@ import java.sql.Statement;
 import java.util.List;
 import java.util.Objects;
 
-import static com.example.demo.services.UserServiceTestUtil.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 @EnableCaching
@@ -45,6 +44,16 @@ public class UserServiceRedisTest {
     private CacheManager cacheManager;
 
     private static final Logger LOG = LoggerFactory.getLogger(UserServiceRedisTest.class);
+
+    private final User userToSave1 = new User("Alice", "Smith", User.Gender.FEMALE);
+    private final User userToSave2 = new User("Bob", "Johnson", User.Gender.MALE);
+    private final User userToSave3 = new User("Terry", "Jerry", User.Gender.ATTACK_HELICOPTER);
+    private final User persistedUser1 = new User(1L, "Alice", "Smith", User.Gender.FEMALE, "alice.smith@example.com");
+    private final User persistedUser2 = new User(2L, "Bob", "Johnson", User.Gender.MALE, "bob.johnson@example.com");
+    private final User persistedUser3 = new User(3L, "Terry", "Jerry", User.Gender.ATTACK_HELICOPTER, "terry.jerry@example.com");
+    private final User userWithoutFirstName = new User(null, "Giggles", User.Gender.OTHER);
+    private final User userWithoutLastName = new User("Chuckles", null, User.Gender.OTHER);
+    private final User userWithoutGender = new User("Riddle", "Riddle", null);
 
     @BeforeAll
     @SuppressWarnings("resource")
@@ -85,16 +94,16 @@ public class UserServiceRedisTest {
 
     @Test
     public void Should_FindAllUsers_When_RepositoryIsNotEmpty() {
-        saveAllUsersToDatabase(userRepository);
+        saveAllUsersToDatabase();
         List<User> users = userService.listUsers();
-        assertEquals(List.of(PERSISTED_USER_1, PERSISTED_USER_2, PERSISTED_USER_3), users);
+        assertEquals(List.of(persistedUser1, persistedUser2, persistedUser3), users);
     }
 
     @Test
     public void Should_SaveUser_When_UserIsValid() {
-        User user = userService.saveUser(USER_TO_SAVE_1);
+        User user = userService.saveUser(userToSave1);
         assertEquals(1L, userRepository.count());
-        assertEquals(PERSISTED_USER_1, user);
+        assertEquals(persistedUser1, user);
     }
 
     @Test
@@ -105,47 +114,47 @@ public class UserServiceRedisTest {
 
     @Test
     public void Should_NotSaveUser_When_UserFirstNameIsNull() {
-        assertThrows(DataIntegrityViolationException.class, () -> userService.saveUser(USER_WITHOUT_FIRST_NAME));
+        assertThrows(DataIntegrityViolationException.class, () -> userService.saveUser(userWithoutFirstName));
         assertEquals(0L, userRepository.count());
     }
 
     @Test
     public void Should_NotSaveUser_When_UserLastNameIsNull() {
-        assertThrows(DataIntegrityViolationException.class, () -> userService.saveUser(USER_WITHOUT_LAST_NAME));
+        assertThrows(DataIntegrityViolationException.class, () -> userService.saveUser(userWithoutLastName));
         assertEquals(0L, userRepository.count());
     }
 
     @Test
     public void Should_NotSaveUser_When_UserGenderIsNull() {
-        assertThrows(DataIntegrityViolationException.class, () -> userService.saveUser(USER_WITHOUT_GENDER));
+        assertThrows(DataIntegrityViolationException.class, () -> userService.saveUser(userWithoutGender));
         assertEquals(0L, userRepository.count());
     }
 
     @Test
     public void Should_DeleteUserById_When_UserExistsInRepository() {
-        saveAllUsersToDatabase(userRepository);
+        saveAllUsersToDatabase();
         userService.deleteUser(2L);
         assertEquals(2L, userRepository.count());
         List<User> users = userService.listUsers();
-        assertEquals(List.of(PERSISTED_USER_1, PERSISTED_USER_3), users);
+        assertEquals(List.of(persistedUser1, persistedUser3), users);
     }
 
     @Test
     public void Should_NotDeleteAnyUsers_When_ThereAreNoUserWithProvidedIdInRepository() {
-        saveAllUsersToDatabase(userRepository);
+        saveAllUsersToDatabase();
         userService.deleteUser(5L);
         assertEquals(3L, userRepository.count());
         List<User> users = userService.listUsers();
-        assertEquals(List.of(PERSISTED_USER_1, PERSISTED_USER_2, PERSISTED_USER_3), users);
+        assertEquals(List.of(persistedUser1, persistedUser2, persistedUser3), users);
     }
 
     @Test
     public void Should_NotDeleteAnyUsers_When_ProvidedIdIsNull() {
-        saveAllUsersToDatabase(userRepository);
+        saveAllUsersToDatabase();
         assertThrows(InvalidDataAccessApiUsageException.class, () -> userService.deleteUser(null));
         assertEquals(3L, userRepository.count());
         List<User> users = userService.listUsers();
-        assertEquals(List.of(PERSISTED_USER_1, PERSISTED_USER_2, PERSISTED_USER_3), users);
+        assertEquals(List.of(persistedUser1, persistedUser2, persistedUser3), users);
     }
 
     @Test
@@ -161,7 +170,7 @@ public class UserServiceRedisTest {
 
     @Test
     public void Should_NotExistUsersAllCache_When_ReloadUsersIsCalledAfterListUsers() {
-        saveAllUsersToDatabase(userRepository);
+        saveAllUsersToDatabase();
         userService.listUsers();
         userService.reloadUsers();
         assertNull(Objects.requireNonNull(cacheManager.getCache("users")).get("all"));
@@ -169,21 +178,27 @@ public class UserServiceRedisTest {
 
     @Test
     public void Should_SaveUserWithUniqueIdInCache_When_SaveUserIsCalled() {
-        User user1 = userService.saveUser(USER_TO_SAVE_1);
+        User user1 = userService.saveUser(userToSave1);
         assertNotNull(Objects.requireNonNull(cacheManager.getCache("users")).get(user1.getId()));
-        User user2 = userService.saveUser(USER_TO_SAVE_2);
+        User user2 = userService.saveUser(userToSave2);
         assertNotNull(Objects.requireNonNull(cacheManager.getCache("users")).get(user2.getId()));
-        User user3 = userService.saveUser(USER_TO_SAVE_3);
+        User user3 = userService.saveUser(userToSave3);
         assertNotNull(Objects.requireNonNull(cacheManager.getCache("users")).get(user3.getId()));
     }
 
     @Test
     public void Should_DeleteUserFromCache_When_DeleteUserIsCalled() {
-        User user1 = userService.saveUser(USER_TO_SAVE_1);
-        User user2 = userService.saveUser(USER_TO_SAVE_2);
+        User user1 = userService.saveUser(userToSave1);
+        User user2 = userService.saveUser(userToSave2);
         userService.deleteUser(user1.getId());
         assertNull(Objects.requireNonNull(cacheManager.getCache("users")).get(user1.getId()));
         userService.deleteUser(user2.getId());
         assertNull(Objects.requireNonNull(cacheManager.getCache("users")).get(user2.getId()));
+    }
+
+    private void saveAllUsersToDatabase() {
+        userRepository.save(userToSave1);
+        userRepository.save(userToSave2);
+        userRepository.save(userToSave3);
     }
 }

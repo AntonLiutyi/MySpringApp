@@ -1,6 +1,7 @@
 package com.example.demo.services;
 
 import com.example.demo.models.User;
+import com.example.demo.models.User.Gender;
 import com.example.demo.repositories.UserRepository;
 import com.example.demo.services.impl.UserServiceTransactional;
 import org.junit.jupiter.api.AfterEach;
@@ -20,7 +21,6 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.example.demo.services.UserServiceTestUtil.*;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -33,6 +33,16 @@ public class UserServiceTransactionalTest {
 
     @Autowired
     private UserServiceTransactional userService;
+
+    private final User userToSave1 = new User("Alice", "Smith", Gender.FEMALE);
+    private final User userToSave2 = new User("Bob", "Johnson", Gender.MALE);
+    private final User userToSave3 = new User("Terry", "Jerry", Gender.ATTACK_HELICOPTER);
+    private final User persistedUser1 = new User(1L, "Alice", "Smith", Gender.FEMALE, "alice.smith@example.com");
+    private final User persistedUser2 = new User(2L, "Bob", "Johnson", Gender.MALE, "bob.johnson@example.com");
+    private final User persistedUser3 = new User(3L, "Terry", "Jerry", Gender.ATTACK_HELICOPTER, "terry.jerry@example.com");
+    private final User userWithoutFirstName = new User(null, "Giggles", Gender.OTHER);
+    private final User userWithoutLastName = new User("Chuckles", null, Gender.OTHER);
+    private final User userWithoutGender = new User("Riddle", "Riddle", null);
 
     @AfterEach
     public void resetDatabase(ApplicationContext applicationContext) throws SQLException {
@@ -51,9 +61,9 @@ public class UserServiceTransactionalTest {
 
     @Test
     public void Should_FindAllUsers_When_RepositoryIsNotEmpty() {
-        saveAllUsersToDatabase(userRepository);
+        saveAllUsersToDatabase();
         List<User> users = userService.listUsers();
-        assertEquals(List.of(PERSISTED_USER_1, PERSISTED_USER_2, PERSISTED_USER_3), users);
+        assertEquals(List.of(persistedUser1, persistedUser2, persistedUser3), users);
     }
 
     @Test
@@ -64,16 +74,16 @@ public class UserServiceTransactionalTest {
 
     @Test
     public void Should_FindAllUserIds_When_RepositoryIsNotEmpty() {
-        saveAllUsersToDatabase(userRepository);
+        saveAllUsersToDatabase();
         List<Long> userIds = userService.getAllUserIds();
         assertEquals(List.of(1L, 2L, 3L), userIds);
     }
 
     @Test
     public void Should_SaveUser_When_UserIsValid() {
-        User user = userService.saveUser(USER_TO_SAVE_1);
+        User user = userService.saveUser(userToSave1);
         assertEquals(1L, userRepository.count());
-        assertEquals(PERSISTED_USER_1, user);
+        assertEquals(persistedUser1, user);
     }
 
     @Test
@@ -84,27 +94,27 @@ public class UserServiceTransactionalTest {
 
     @Test
     public void Should_NotSaveUser_When_UserFirstNameIsNull() {
-        assertThrows(DataIntegrityViolationException.class, () -> userService.saveUser(USER_WITHOUT_FIRST_NAME));
+        assertThrows(DataIntegrityViolationException.class, () -> userService.saveUser(userWithoutFirstName));
         assertEquals(0L, userRepository.count());
     }
 
     @Test
     public void Should_NotSaveUser_When_UserLastNameIsNull() {
-        assertThrows(DataIntegrityViolationException.class, () -> userService.saveUser(USER_WITHOUT_LAST_NAME));
+        assertThrows(DataIntegrityViolationException.class, () -> userService.saveUser(userWithoutLastName));
         assertEquals(0L, userRepository.count());
     }
 
     @Test
     public void Should_NotSaveUser_When_UserGenderIsNull() {
-        assertThrows(DataIntegrityViolationException.class, () -> userService.saveUser(USER_WITHOUT_GENDER));
+        assertThrows(DataIntegrityViolationException.class, () -> userService.saveUser(userWithoutGender));
         assertEquals(0L, userRepository.count());
     }
 
     @Test
     public void Should_SaveAllUsers_When_UsersAreValid() {
-        userService.saveUsers(List.of(USER_TO_SAVE_1, USER_TO_SAVE_2, USER_TO_SAVE_3));
+        userService.saveUsers(List.of(userToSave1, userToSave2, userToSave3));
         List<User> users = userService.listUsers();
-        assertEquals(List.of(PERSISTED_USER_1, PERSISTED_USER_2, PERSISTED_USER_3), users);
+        assertEquals(List.of(persistedUser1, persistedUser2, persistedUser3), users);
     }
 
     @Test
@@ -116,9 +126,9 @@ public class UserServiceTransactionalTest {
     @Test
     public void Should_NotSaveAnyUsers_When_SomeUsersAreNull() {
         List<User> usersToSave = new ArrayList<>() {{
-            add(USER_TO_SAVE_1);
+            add(userToSave1);
             add(null);
-            add(USER_TO_SAVE_3);
+            add(userToSave3);
         }};
         assertThrows(InvalidDataAccessApiUsageException.class, () -> userService.saveUsers(usersToSave));
         assertEquals(0L, userRepository.count());
@@ -127,9 +137,9 @@ public class UserServiceTransactionalTest {
     @Test
     public void Should_NotSaveAnyUsers_When_SomeUsersFirstNameIsNull() {
         List<User> usersToSave = new ArrayList<>() {{
-            add(USER_TO_SAVE_1);
-            add(USER_TO_SAVE_2);
-            add(USER_WITHOUT_FIRST_NAME);
+            add(userToSave1);
+            add(userToSave2);
+            add(userWithoutFirstName);
         }};
         assertThrows(DataIntegrityViolationException.class, () -> userService.saveUsers(usersToSave));
         assertEquals(0L, userRepository.count());
@@ -138,9 +148,9 @@ public class UserServiceTransactionalTest {
     @Test
     public void Should_NotSaveAnyUsers_When_SomeUsersLastNameIsNull() {
         List<User> usersToSave = new ArrayList<>() {{
-            add(USER_TO_SAVE_2);
-            add(USER_TO_SAVE_3);
-            add(USER_WITHOUT_LAST_NAME);
+            add(userToSave2);
+            add(userToSave3);
+            add(userWithoutLastName);
         }};
         assertThrows(DataIntegrityViolationException.class, () -> userService.saveUsers(usersToSave));
         assertEquals(0L, userRepository.count());
@@ -149,9 +159,9 @@ public class UserServiceTransactionalTest {
     @Test
     public void Should_NotSaveAnyUsers_When_SomeUsersGenderIsNull() {
         List<User> usersToSave = new ArrayList<>() {{
-            add(USER_TO_SAVE_3);
-            add(USER_TO_SAVE_1);
-            add(USER_WITHOUT_GENDER);
+            add(userToSave3);
+            add(userToSave1);
+            add(userWithoutGender);
         }};
         assertThrows(DataIntegrityViolationException.class, () -> userService.saveUsers(usersToSave));
         assertEquals(0L, userRepository.count());
@@ -159,52 +169,52 @@ public class UserServiceTransactionalTest {
 
     @Test
     public void Should_DeleteUserById_When_UserExistsInRepository() {
-        saveAllUsersToDatabase(userRepository);
+        saveAllUsersToDatabase();
         userService.deleteUser(2L);
         assertEquals(2L, userRepository.count());
         List<User> users = userService.listUsers();
-        assertEquals(List.of(PERSISTED_USER_1, PERSISTED_USER_3), users);
+        assertEquals(List.of(persistedUser1, persistedUser3), users);
     }
 
     @Test
     public void Should_NotDeleteAnyUsers_When_ThereAreNoUserWithProvidedIdInRepository() {
-        saveAllUsersToDatabase(userRepository);
+        saveAllUsersToDatabase();
         userService.deleteUser(5L);
         assertEquals(3L, userRepository.count());
         List<User> users = userService.listUsers();
-        assertEquals(List.of(PERSISTED_USER_1, PERSISTED_USER_2, PERSISTED_USER_3), users);
+        assertEquals(List.of(persistedUser1, persistedUser2, persistedUser3), users);
     }
 
     @Test
     public void Should_NotDeleteAnyUsers_When_ProvidedIdIsNull() {
-        saveAllUsersToDatabase(userRepository);
+        saveAllUsersToDatabase();
         assertThrows(InvalidDataAccessApiUsageException.class, () -> userService.deleteUser(null));
         assertEquals(3L, userRepository.count());
         List<User> users = userService.listUsers();
-        assertEquals(List.of(PERSISTED_USER_1, PERSISTED_USER_2, PERSISTED_USER_3), users);
+        assertEquals(List.of(persistedUser1, persistedUser2, persistedUser3), users);
     }
 
     @Test
     public void Should_NotDeleteAnyUsers_When_ListOfIdsIsNull() {
-        saveAllUsersToDatabase(userRepository);
+        saveAllUsersToDatabase();
         assertThrows(InvalidDataAccessApiUsageException.class, () -> userService.deleteAllUsersByIds(null));
         assertEquals(3L, userRepository.count());
         List<User> users = userService.listUsers();
-        assertEquals(List.of(PERSISTED_USER_1, PERSISTED_USER_2, PERSISTED_USER_3), users);
+        assertEquals(List.of(persistedUser1, persistedUser2, persistedUser3), users);
     }
 
     @Test
     public void Should_DeleteOnlyUsersWithMatchingIds_When_IdsAreProvided() {
-        saveAllUsersToDatabase(userRepository);
+        saveAllUsersToDatabase();
         userService.deleteAllUsersByIds(List.of(0L, 3L, 5L, 8L));
         assertEquals(2L, userRepository.count());
         List<User> users = userService.listUsers();
-        assertEquals(List.of(PERSISTED_USER_1, PERSISTED_USER_2), users);
+        assertEquals(List.of(persistedUser1, persistedUser2), users);
     }
 
     @Test
     public void Should_DeleteOnlyUsersWithMatchingIds_When_IdsAreProvidedAndSomeIdsAreNull() {
-        saveAllUsersToDatabase(userRepository);
+        saveAllUsersToDatabase();
         List<Long> userIds = new ArrayList<>() {{
             add(0L);
             add(2L);
@@ -215,13 +225,19 @@ public class UserServiceTransactionalTest {
         Assertions.assertDoesNotThrow(() -> userService.deleteAllUsersByIds(userIds));
         assertEquals(1L, userRepository.count());
         List<User> users = userService.listUsers();
-        assertEquals(List.of(PERSISTED_USER_1), users);
+        assertEquals(List.of(persistedUser1), users);
     }
 
     @Test
     public void Should_DeleteAllUsers_When_UsersRepositoryIsNotEmpty() {
-        saveAllUsersToDatabase(userRepository);
+        saveAllUsersToDatabase();
         userService.deleteAllUsers();
         assertEquals(0L, userRepository.count());
+    }
+
+    private void saveAllUsersToDatabase() {
+        userRepository.save(userToSave1);
+        userRepository.save(userToSave2);
+        userRepository.save(userToSave3);
     }
 }
