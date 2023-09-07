@@ -156,7 +156,6 @@ public class UserServiceJpaTest {
     }
 
     @Test
-    @SuppressWarnings("ConstantConditions")
     public void Should_ThrowNullPointerException_When_ListOfUsersIsNull() {
         assertThrows(NullPointerException.class, () -> userService.saveUsers(null));
         assertEquals(0L, countUsersInDatabase());
@@ -208,22 +207,23 @@ public class UserServiceJpaTest {
 
     @Test
     public void Should_UpdateUser_When_UserIsValidAndExistInDatabase() {
-//        saveUsersToDatabase();
-//        User userForUpdate1 = userToSave1;
-//        userForUpdate1.setEmail("alice.smith@example.com");
-//        User userForUpdate2 = new User(2L, "Bob", "Johnson", User.Gender.MALE, "bob.johnson@example.com");
-//        User userForUpdate3 = new User("Bob", "Johnson", User.Gender.MALE);
-//        userForUpdate3.setEmail("bob.johnson@example.com");
-//        User user1 = userService.updateUser(userForUpdate1);
-//        User user2 = userService.updateUser(userForUpdate2);
-//        User user3 = userService.updateUser(userForUpdate3);
-//        User user4 = userService.updateUser(new User("Name", "Surname", User.Gender.OTHER));
-//        userService.listUsers().forEach(System.out::println);
+        User userToUpdate = userService.saveUser(userToSave2);
+        assertNotEquals(persistedUser1, userToUpdate);
+        userToUpdate.setFirstName("Alice");
+        userToUpdate.setLastName("Smith");
+        userToUpdate.setGender(User.Gender.FEMALE);
+        AtomicReference<User> updatedUser = new AtomicReference<>();
+        assertDoesNotThrow(() -> updatedUser.set(userService.updateUser(userToUpdate)));
+        assertEquals(1L, countUsersInDatabase());
+        assertEquals(persistedUser1, updatedUser.get());
     }
 
     @Test
     public void Should_SaveUser_When_UserIsValidAndNotExistInDatabase() {
-
+        AtomicReference<User> user = new AtomicReference<>();
+        assertDoesNotThrow(() -> user.set(userService.updateUser(userToSave1)));
+        assertEquals(1L, countUsersInDatabase());
+        assertEquals(persistedUser1, user.get());
     }
 
     @Test
@@ -231,6 +231,93 @@ public class UserServiceJpaTest {
         assertThrows(NullPointerException.class, () -> userService.updateUser(null));
         assertEquals(0L, countUsersInDatabase());
     }
+
+    @Test
+    public void Should_NotUpdateOrSaveUserAndThrowIllegalArgumentException_When_UserFirstNameIsNull() {
+        assertThrows(IllegalArgumentException.class, () -> userService.updateUser(userWithoutFirstName));
+        assertEquals(0L, countUsersInDatabase());
+    }
+
+    @Test
+    public void Should_NotUpdateOrSaveUserAndThrowIllegalArgumentException_When_UserLastNameIsNull() {
+        assertThrows(IllegalArgumentException.class, () -> userService.updateUser(userWithoutLastName));
+        assertEquals(0L, countUsersInDatabase());
+    }
+
+    @Test
+    public void Should_NotUpdateOrSaveUserAndThrowIllegalArgumentException_When_UserGenderIsNull() {
+        assertThrows(IllegalArgumentException.class, () -> userService.updateUser(userWithoutGender));
+        assertEquals(0L, countUsersInDatabase());
+    }
+
+    @Test
+    public void Should_DeleteUserById_When_UserExistsInRepository() {
+        saveUsersToDatabase();
+        userService.deleteUser(2L);
+        assertEquals(2L, countUsersInDatabase());
+        List<User> users = userService.listUsers();
+        assertEquals(List.of(persistedUser1, persistedUser3), users);
+    }
+
+    @Test
+    public void Should_NotDeleteAnyUsers_When_ThereAreNoUserWithProvidedIdInRepository() {
+        saveUsersToDatabase();
+        userService.deleteUser(5L);
+        assertEquals(3L, countUsersInDatabase());
+        List<User> users = userService.listUsers();
+        assertEquals(List.of(persistedUser1, persistedUser2, persistedUser3), users);
+    }
+
+    @Test
+    public void Should_NotDeleteAnyUsersAndThrowIllegalArgumentException_When_ProvidedIdIsNull() {
+        saveUsersToDatabase();
+        assertThrows(IllegalArgumentException.class, () -> userService.deleteUser(null));
+        assertEquals(3L, countUsersInDatabase());
+        List<User> users = userService.listUsers();
+        assertEquals(List.of(persistedUser1, persistedUser2, persistedUser3), users);
+    }
+
+    @Test
+    public void Should_NotDeleteAnyUsersAndThrowNullPointerException_When_ListOfIdsIsNull() {
+        saveUsersToDatabase();
+        assertThrows(NullPointerException.class, () -> userService.deleteAllUsersByIds(null));
+        assertEquals(3L, countUsersInDatabase());
+        List<User> users = userService.listUsers();
+        assertEquals(List.of(persistedUser1, persistedUser2, persistedUser3), users);
+    }
+
+    @Test
+    public void Should_DeleteOnlyUsersWithMatchingIds_When_ListOfIdsAreProvided() {
+        saveUsersToDatabase();
+        userService.deleteAllUsersByIds(List.of(0L, 3L, 5L, 8L));
+        assertEquals(2L, countUsersInDatabase());
+        List<User> users = userService.listUsers();
+        assertEquals(List.of(persistedUser1, persistedUser2), users);
+    }
+
+    @Test
+    public void Should_DeleteOnlyUsersWithMatchingIdsAndNotThrowException_When_ListOfIdsAreProvidedAndSomeIdsAreNull() {
+        saveUsersToDatabase();
+        List<Long> userIds = new ArrayList<>() {{
+            add(0L);
+            add(2L);
+            add(null);
+            add(3L);
+            add(5L);
+        }};
+        Assertions.assertDoesNotThrow(() -> userService.deleteAllUsersByIds(userIds));
+        assertEquals(1L, countUsersInDatabase());
+        List<User> users = userService.listUsers();
+        assertEquals(List.of(persistedUser1), users);
+    }
+
+    @Test
+    public void Should_DeleteAllUsers_When_UsersRepositoryIsNotEmpty() {
+        saveUsersToDatabase();
+        userService.deleteAllUsers();
+        assertEquals(0L, countUsersInDatabase());
+    }
+
 
     private void saveUsersToDatabase() {
         entityManager.persist(userToSave1);
