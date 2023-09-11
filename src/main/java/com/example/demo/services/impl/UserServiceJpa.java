@@ -51,15 +51,14 @@ public class UserServiceJpa implements UserService {
     @Override
     public User saveUser(User user) {
         validateUser(user);
-        User newUser = user.clone();
-        entityManager.persist(newUser);
-        return newUser;
+        entityManager.persist(user);
+        return user;
     }
 
     public void saveUsers(Collection<User> users) {
         validateUsers(users);
         for (User user : users) {
-            entityManager.persist(user.clone());
+            entityManager.persist(user);
         }
     }
 
