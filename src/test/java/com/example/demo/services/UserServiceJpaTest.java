@@ -4,6 +4,7 @@ import com.example.demo.models.User;
 import com.example.demo.services.impl.UserServiceJpa;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
@@ -14,6 +15,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static com.example.demo.services.util.UserServiceTestUtil.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 @DataJpaTest
@@ -26,15 +28,20 @@ public class UserServiceJpaTest {
     @Autowired
     private UserServiceJpa userService;
 
-    private final User userToSave1 = new User("Alice", "Smith", User.Gender.FEMALE);
-    private final User userToSave2 = new User("Bob", "Johnson", User.Gender.MALE);
-    private final User userToSave3 = new User("Terry", "Jerry", User.Gender.ATTACK_HELICOPTER);
-    private final User persistedUser1 = new User(1L, "Alice", "Smith", User.Gender.FEMALE, "alice.smith@example.com");
-    private final User persistedUser2 = new User(2L, "Bob", "Johnson", User.Gender.MALE, "bob.johnson@example.com");
-    private final User persistedUser3 = new User(3L, "Terry", "Jerry", User.Gender.ATTACK_HELICOPTER, "terry.jerry@example.com");
-    private final User userWithoutFirstName = new User(null, "Giggles", User.Gender.OTHER);
-    private final User userWithoutLastName = new User("Chuckles", null, User.Gender.OTHER);
-    private final User userWithoutGender = new User("Riddle", "Riddle", null);
+    private User userToSave1;
+    private User userToSave2;
+    private User userToSave3;
+
+    /**
+     * Some save operations may set the user ID.
+     * It is necessary to reset the ID back to null to prevent further problems.
+     */
+    @BeforeEach
+    public void resetUsersToSave() {
+        userToSave1 = USER_TO_SAVE_1.clone();
+        userToSave2 = USER_TO_SAVE_2.clone();
+        userToSave3 = USER_TO_SAVE_3.clone();
+    }
 
     @AfterEach
     public void resetDatabase() {
@@ -53,7 +60,7 @@ public class UserServiceJpaTest {
     public void Should_FindAllUsers_When_DatabaseIsNotEmpty() {
         saveUsersToDatabase();
         List<User> users = userService.listUsers();
-        assertEquals(List.of(persistedUser1, persistedUser2, persistedUser3), users);
+        assertEquals(List.of(PERSISTED_USER_1, PERSISTED_USER_2, PERSISTED_USER_3), users);
     }
 
     @Test
@@ -71,7 +78,7 @@ public class UserServiceJpaTest {
     public void Should_FindUserWithMatchingId_When_IdIsValid() {
         saveUsersToDatabase();
         User user = userService.findUser(2L);
-        assertEquals(persistedUser2, user);
+        assertEquals(PERSISTED_USER_2, user);
     }
 
     @Test
@@ -83,7 +90,7 @@ public class UserServiceJpaTest {
     public void Should_FindOnlyUsersWithMatchingIds_When_IdsAreValid() {
         saveUsersToDatabase();
         List<User> users = userService.findAllUsersByIds(List.of(0L, 3L, 5L, 8L));
-        assertEquals(List.of(persistedUser3), users);
+        assertEquals(List.of(PERSISTED_USER_3), users);
     }
 
     @Test
@@ -98,7 +105,7 @@ public class UserServiceJpaTest {
         }};
         AtomicReference<List<User>> users = new AtomicReference<>();
         Assertions.assertDoesNotThrow(() -> users.set(userService.findAllUsersByIds(userIds)));
-        assertEquals(List.of(persistedUser2, persistedUser3), users.get());
+        assertEquals(List.of(PERSISTED_USER_2, PERSISTED_USER_3), users.get());
     }
 
     @Test
@@ -120,7 +127,7 @@ public class UserServiceJpaTest {
         AtomicReference<User> user = new AtomicReference<>();
         assertDoesNotThrow(() -> user.set(userService.saveUser(userToSave1)));
         assertEquals(1L, countUsersInDatabase());
-        assertEquals(persistedUser1, user.get());
+        assertEquals(PERSISTED_USER_1, user.get());
     }
 
     @Test
@@ -131,19 +138,19 @@ public class UserServiceJpaTest {
 
     @Test
     public void Should_NotSaveUserAndThrowIllegalArgumentException_When_UserFirstNameIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> userService.saveUser(userWithoutFirstName));
+        assertThrows(IllegalArgumentException.class, () -> userService.saveUser(USER_WITHOUT_FIRST_NAME));
         assertEquals(0L, countUsersInDatabase());
     }
 
     @Test
     public void Should_NotSaveUserAndThrowIllegalArgumentException_When_UserLastNameIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> userService.saveUser(userWithoutLastName));
+        assertThrows(IllegalArgumentException.class, () -> userService.saveUser(USER_WITHOUT_LAST_NAME));
         assertEquals(0L, countUsersInDatabase());
     }
 
     @Test
     public void Should_NotSaveUserAndThrowIllegalArgumentException_When_UserGenderIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> userService.saveUser(userWithoutGender));
+        assertThrows(IllegalArgumentException.class, () -> userService.saveUser(USER_WITHOUT_GENDER));
         assertEquals(0L, countUsersInDatabase());
     }
 
@@ -152,7 +159,7 @@ public class UserServiceJpaTest {
         assertDoesNotThrow(() -> userService.saveUsers(List.of(userToSave1, userToSave2, userToSave3)));
         assertEquals(3L, countUsersInDatabase());
         List<User> users = userService.listUsers();
-        assertEquals(List.of(persistedUser1, persistedUser2, persistedUser3), users);
+        assertEquals(List.of(PERSISTED_USER_1, PERSISTED_USER_2, PERSISTED_USER_3), users);
     }
 
     @Test
@@ -177,7 +184,7 @@ public class UserServiceJpaTest {
         List<User> usersToSave = new ArrayList<>() {{
             add(userToSave1);
             add(userToSave2);
-            add(userWithoutFirstName);
+            add(USER_WITHOUT_FIRST_NAME);
         }};
         assertThrows(IllegalArgumentException.class, () -> userService.saveUsers(usersToSave));
         assertEquals(0L, countUsersInDatabase());
@@ -188,7 +195,7 @@ public class UserServiceJpaTest {
         List<User> usersToSave = new ArrayList<>() {{
             add(userToSave2);
             add(userToSave3);
-            add(userWithoutLastName);
+            add(USER_WITHOUT_LAST_NAME);
         }};
         assertThrows(IllegalArgumentException.class, () -> userService.saveUsers(usersToSave));
         assertEquals(0L, countUsersInDatabase());
@@ -199,7 +206,7 @@ public class UserServiceJpaTest {
         List<User> usersToSave = new ArrayList<>() {{
             add(userToSave3);
             add(userToSave1);
-            add(userWithoutGender);
+            add(USER_WITHOUT_GENDER);
         }};
         assertThrows(IllegalArgumentException.class, () -> userService.saveUsers(usersToSave));
         assertEquals(0L, countUsersInDatabase());
@@ -208,14 +215,14 @@ public class UserServiceJpaTest {
     @Test
     public void Should_UpdateUser_When_UserIsValidAndExistInDatabase() {
         User userToUpdate = userService.saveUser(userToSave2);
-        assertNotEquals(persistedUser1, userToUpdate);
+        assertNotEquals(PERSISTED_USER_1, userToUpdate);
         userToUpdate.setFirstName("Alice");
         userToUpdate.setLastName("Smith");
         userToUpdate.setGender(User.Gender.FEMALE);
         AtomicReference<User> updatedUser = new AtomicReference<>();
         assertDoesNotThrow(() -> updatedUser.set(userService.updateUser(userToUpdate)));
         assertEquals(1L, countUsersInDatabase());
-        assertEquals(persistedUser1, updatedUser.get());
+        assertEquals(PERSISTED_USER_1, updatedUser.get());
     }
 
     @Test
@@ -223,7 +230,7 @@ public class UserServiceJpaTest {
         AtomicReference<User> user = new AtomicReference<>();
         assertDoesNotThrow(() -> user.set(userService.updateUser(userToSave1)));
         assertEquals(1L, countUsersInDatabase());
-        assertEquals(persistedUser1, user.get());
+        assertEquals(PERSISTED_USER_1, user.get());
     }
 
     @Test
@@ -234,19 +241,19 @@ public class UserServiceJpaTest {
 
     @Test
     public void Should_NotUpdateOrSaveUserAndThrowIllegalArgumentException_When_UserFirstNameIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> userService.updateUser(userWithoutFirstName));
+        assertThrows(IllegalArgumentException.class, () -> userService.updateUser(USER_WITHOUT_FIRST_NAME));
         assertEquals(0L, countUsersInDatabase());
     }
 
     @Test
     public void Should_NotUpdateOrSaveUserAndThrowIllegalArgumentException_When_UserLastNameIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> userService.updateUser(userWithoutLastName));
+        assertThrows(IllegalArgumentException.class, () -> userService.updateUser(USER_WITHOUT_LAST_NAME));
         assertEquals(0L, countUsersInDatabase());
     }
 
     @Test
     public void Should_NotUpdateOrSaveUserAndThrowIllegalArgumentException_When_UserGenderIsNull() {
-        assertThrows(IllegalArgumentException.class, () -> userService.updateUser(userWithoutGender));
+        assertThrows(IllegalArgumentException.class, () -> userService.updateUser(USER_WITHOUT_GENDER));
         assertEquals(0L, countUsersInDatabase());
     }
 
@@ -256,7 +263,7 @@ public class UserServiceJpaTest {
         userService.deleteUser(2L);
         assertEquals(2L, countUsersInDatabase());
         List<User> users = userService.listUsers();
-        assertEquals(List.of(persistedUser1, persistedUser3), users);
+        assertEquals(List.of(PERSISTED_USER_1, PERSISTED_USER_3), users);
     }
 
     @Test
@@ -265,7 +272,7 @@ public class UserServiceJpaTest {
         userService.deleteUser(5L);
         assertEquals(3L, countUsersInDatabase());
         List<User> users = userService.listUsers();
-        assertEquals(List.of(persistedUser1, persistedUser2, persistedUser3), users);
+        assertEquals(List.of(PERSISTED_USER_1, PERSISTED_USER_2, PERSISTED_USER_3), users);
     }
 
     @Test
@@ -274,7 +281,7 @@ public class UserServiceJpaTest {
         assertThrows(IllegalArgumentException.class, () -> userService.deleteUser(null));
         assertEquals(3L, countUsersInDatabase());
         List<User> users = userService.listUsers();
-        assertEquals(List.of(persistedUser1, persistedUser2, persistedUser3), users);
+        assertEquals(List.of(PERSISTED_USER_1, PERSISTED_USER_2, PERSISTED_USER_3), users);
     }
 
     @Test
@@ -283,7 +290,7 @@ public class UserServiceJpaTest {
         assertThrows(NullPointerException.class, () -> userService.deleteAllUsersByIds(null));
         assertEquals(3L, countUsersInDatabase());
         List<User> users = userService.listUsers();
-        assertEquals(List.of(persistedUser1, persistedUser2, persistedUser3), users);
+        assertEquals(List.of(PERSISTED_USER_1, PERSISTED_USER_2, PERSISTED_USER_3), users);
     }
 
     @Test
@@ -292,7 +299,7 @@ public class UserServiceJpaTest {
         userService.deleteAllUsersByIds(List.of(0L, 3L, 5L, 8L));
         assertEquals(2L, countUsersInDatabase());
         List<User> users = userService.listUsers();
-        assertEquals(List.of(persistedUser1, persistedUser2), users);
+        assertEquals(List.of(PERSISTED_USER_1, PERSISTED_USER_2), users);
     }
 
     @Test
@@ -308,7 +315,7 @@ public class UserServiceJpaTest {
         Assertions.assertDoesNotThrow(() -> userService.deleteAllUsersByIds(userIds));
         assertEquals(1L, countUsersInDatabase());
         List<User> users = userService.listUsers();
-        assertEquals(List.of(persistedUser1), users);
+        assertEquals(List.of(PERSISTED_USER_1), users);
     }
 
     @Test
