@@ -251,7 +251,7 @@ public class UserServiceJpaTest {
     }
 
     @Test
-    public void Should_DeleteUserById_When_UserExistsInRepository() {
+    public void Should_DeleteUserById_When_UserExistsInDatabase() {
         saveUsersToDatabase();
         userService.deleteUser(2L);
         assertEquals(2L, countUsersInDatabase());
@@ -260,7 +260,7 @@ public class UserServiceJpaTest {
     }
 
     @Test
-    public void Should_NotDeleteAnyUsers_When_ThereAreNoUserWithProvidedIdInRepository() {
+    public void Should_NotDeleteAnyUsers_When_ThereAreNoUserWithProvidedIdInDatabase() {
         saveUsersToDatabase();
         userService.deleteUser(5L);
         assertEquals(3L, countUsersInDatabase());
@@ -287,7 +287,7 @@ public class UserServiceJpaTest {
     }
 
     @Test
-    public void Should_DeleteOnlyUsersWithMatchingIds_When_ListOfIdsAreProvided() {
+    public void Should_DeleteOnlyUsersWithMatchingIds_When_ListOfIdsIsProvided() {
         saveUsersToDatabase();
         userService.deleteAllUsersByIds(List.of(0L, 3L, 5L, 8L));
         assertEquals(2L, countUsersInDatabase());
@@ -296,7 +296,7 @@ public class UserServiceJpaTest {
     }
 
     @Test
-    public void Should_DeleteOnlyUsersWithMatchingIdsAndNotThrowException_When_ListOfIdsAreProvidedAndSomeIdsAreNull() {
+    public void Should_DeleteOnlyUsersWithMatchingIdsAndNotThrowException_When_ListOfIdsIsProvidedAndSomeIdsAreNull() {
         saveUsersToDatabase();
         List<Long> userIds = new ArrayList<>() {{
             add(0L);
@@ -312,7 +312,7 @@ public class UserServiceJpaTest {
     }
 
     @Test
-    public void Should_DeleteAllUsers_When_UsersRepositoryIsNotEmpty() {
+    public void Should_DeleteAllUsers_When_DatabaseIsNotEmpty() {
         saveUsersToDatabase();
         userService.deleteAllUsers();
         assertEquals(0L, countUsersInDatabase());
