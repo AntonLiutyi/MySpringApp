@@ -87,14 +87,14 @@ public class UserServiceRedisTest {
     }
 
     @Test
-    public void Should_FindNoUsers_When_RepositoryIsEmpty() {
+    public void Should_FindNoUsers_When_DatabaseIsEmpty() {
         List<User> users = userService.listUsers();
         assertEquals(0, users.size());
     }
 
     @Test
-    public void Should_FindAllUsers_When_RepositoryIsNotEmpty() {
-        saveAllUsersToDatabase();
+    public void Should_FindAllUsers_When_DatabaseIsNotEmpty() {
+        saveUsersToDatabase();
         List<User> users = userService.listUsers();
         assertEquals(List.of(persistedUser1, persistedUser2, persistedUser3), users);
     }
@@ -107,32 +107,32 @@ public class UserServiceRedisTest {
     }
 
     @Test
-    public void Should_NotSaveUser_When_UserIsNull() {
+    public void Should_NotSaveUserAndThrowInvalidDataAccessApiUsageException_When_UserIsNull() {
         assertThrows(InvalidDataAccessApiUsageException.class, () -> userService.saveUser(null));
         assertEquals(0L, userRepository.count());
     }
 
     @Test
-    public void Should_NotSaveUser_When_UserFirstNameIsNull() {
+    public void Should_NotSaveUserAndThrowDataIntegrityViolationException_When_UserFirstNameIsNull() {
         assertThrows(DataIntegrityViolationException.class, () -> userService.saveUser(userWithoutFirstName));
         assertEquals(0L, userRepository.count());
     }
 
     @Test
-    public void Should_NotSaveUser_When_UserLastNameIsNull() {
+    public void Should_NotSaveUserAndThrowDataIntegrityViolationException_When_UserLastNameIsNull() {
         assertThrows(DataIntegrityViolationException.class, () -> userService.saveUser(userWithoutLastName));
         assertEquals(0L, userRepository.count());
     }
 
     @Test
-    public void Should_NotSaveUser_When_UserGenderIsNull() {
+    public void Should_NotSaveUserAndThrowDataIntegrityViolationException_When_UserGenderIsNull() {
         assertThrows(DataIntegrityViolationException.class, () -> userService.saveUser(userWithoutGender));
         assertEquals(0L, userRepository.count());
     }
 
     @Test
-    public void Should_DeleteUserById_When_UserExistsInRepository() {
-        saveAllUsersToDatabase();
+    public void Should_DeleteUserById_When_UserExistsInDatabase() {
+        saveUsersToDatabase();
         userService.deleteUser(2L);
         assertEquals(2L, userRepository.count());
         List<User> users = userService.listUsers();
@@ -140,8 +140,8 @@ public class UserServiceRedisTest {
     }
 
     @Test
-    public void Should_NotDeleteAnyUsers_When_ThereAreNoUserWithProvidedIdInRepository() {
-        saveAllUsersToDatabase();
+    public void Should_NotDeleteAnyUsers_When_ThereAreNoUserWithProvidedIdInDatabase() {
+        saveUsersToDatabase();
         userService.deleteUser(5L);
         assertEquals(3L, userRepository.count());
         List<User> users = userService.listUsers();
@@ -149,8 +149,8 @@ public class UserServiceRedisTest {
     }
 
     @Test
-    public void Should_NotDeleteAnyUsers_When_ProvidedIdIsNull() {
-        saveAllUsersToDatabase();
+    public void Should_NotDeleteAnyUsersAndThrowInvalidDataAccessApiUsageException_When_ProvidedIdIsNull() {
+        saveUsersToDatabase();
         assertThrows(InvalidDataAccessApiUsageException.class, () -> userService.deleteUser(null));
         assertEquals(3L, userRepository.count());
         List<User> users = userService.listUsers();
@@ -169,8 +169,8 @@ public class UserServiceRedisTest {
     }
 
     @Test
-    public void Should_NotExistUsersAllCache_When_ReloadUsersIsCalledAfterListUsers() {
-        saveAllUsersToDatabase();
+    public void Should_NotExistUsersAllCache_When_ReloadUsersIsCalledAfterListUsersCall() {
+        saveUsersToDatabase();
         userService.listUsers();
         userService.reloadUsers();
         assertNull(Objects.requireNonNull(cacheManager.getCache("users")).get("all"));
@@ -187,7 +187,7 @@ public class UserServiceRedisTest {
     }
 
     @Test
-    public void Should_DeleteUserFromCache_When_DeleteUserIsCalled() {
+    public void Should_DeleteUserWithUniqueIdFromCache_When_DeleteUserIsCalled() {
         User user1 = userService.saveUser(userToSave1);
         User user2 = userService.saveUser(userToSave2);
         userService.deleteUser(user1.getId());
@@ -196,7 +196,7 @@ public class UserServiceRedisTest {
         assertNull(Objects.requireNonNull(cacheManager.getCache("users")).get(user2.getId()));
     }
 
-    private void saveAllUsersToDatabase() {
+    private void saveUsersToDatabase() {
         userRepository.save(userToSave1);
         userRepository.save(userToSave2);
         userRepository.save(userToSave3);
