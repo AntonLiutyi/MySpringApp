@@ -45,6 +45,8 @@ public class UserServiceRedisTest {
     private CacheManager cacheManager;
 
     private static final Logger LOG = LoggerFactory.getLogger(UserServiceRedisTest.class);
+    private static final String USERS_CACHE_NAME = "users";
+    private static final String USERS_CACHE_KEY = "all";
 
     @BeforeAll
     @SuppressWarnings("resource")
@@ -150,13 +152,13 @@ public class UserServiceRedisTest {
 
     @Test
     public void Should_NotExistUsersAllCache_When_ListUsersIsNotCalled() {
-        assertNull(Objects.requireNonNull(cacheManager.getCache("users")).get("all"));
+        assertNull(Objects.requireNonNull(cacheManager.getCache(USERS_CACHE_NAME)).get(USERS_CACHE_KEY));
     }
 
     @Test
     public void Should_ExistUsersAllCache_When_ListUsersIsCalled() {
         userService.listUsers();
-        assertNotNull(Objects.requireNonNull(cacheManager.getCache("users")).get("all"));
+        assertNotNull(Objects.requireNonNull(cacheManager.getCache(USERS_CACHE_NAME)).get(USERS_CACHE_KEY));
     }
 
     @Test
@@ -164,17 +166,17 @@ public class UserServiceRedisTest {
         saveUsersToDatabase();
         userService.listUsers();
         userService.reloadUsers();
-        assertNull(Objects.requireNonNull(cacheManager.getCache("users")).get("all"));
+        assertNull(Objects.requireNonNull(cacheManager.getCache(USERS_CACHE_NAME)).get(USERS_CACHE_KEY));
     }
 
     @Test
     public void Should_SaveUserWithUniqueIdInCache_When_SaveUserIsCalled() {
         User user1 = userService.saveUser(USER_TO_SAVE_1);
-        assertNotNull(Objects.requireNonNull(cacheManager.getCache("users")).get(user1.getId()));
+        assertNotNull(Objects.requireNonNull(cacheManager.getCache(USERS_CACHE_NAME)).get(user1.getId()));
         User user2 = userService.saveUser(USER_TO_SAVE_2);
-        assertNotNull(Objects.requireNonNull(cacheManager.getCache("users")).get(user2.getId()));
+        assertNotNull(Objects.requireNonNull(cacheManager.getCache(USERS_CACHE_NAME)).get(user2.getId()));
         User user3 = userService.saveUser(USER_TO_SAVE_3);
-        assertNotNull(Objects.requireNonNull(cacheManager.getCache("users")).get(user3.getId()));
+        assertNotNull(Objects.requireNonNull(cacheManager.getCache(USERS_CACHE_NAME)).get(user3.getId()));
     }
 
     @Test
@@ -182,9 +184,9 @@ public class UserServiceRedisTest {
         User user1 = userService.saveUser(USER_TO_SAVE_1);
         User user2 = userService.saveUser(USER_TO_SAVE_2);
         userService.deleteUser(user1.getId());
-        assertNull(Objects.requireNonNull(cacheManager.getCache("users")).get(user1.getId()));
+        assertNull(Objects.requireNonNull(cacheManager.getCache(USERS_CACHE_NAME)).get(user1.getId()));
         userService.deleteUser(user2.getId());
-        assertNull(Objects.requireNonNull(cacheManager.getCache("users")).get(user2.getId()));
+        assertNull(Objects.requireNonNull(cacheManager.getCache(USERS_CACHE_NAME)).get(user2.getId()));
     }
 
     private void saveUsersToDatabase() {
