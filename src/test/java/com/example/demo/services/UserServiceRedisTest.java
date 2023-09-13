@@ -5,7 +5,6 @@ import com.example.demo.repositories.UserRepository;
 import com.example.demo.services.impl.UserServiceRedis;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -49,10 +48,6 @@ public class UserServiceRedisTest {
     private static final String USERS_CACHE_NAME = "users";
     private static final String USERS_CACHE_KEY = "all";
 
-    private User userToSave1;
-    private User userToSave2;
-    private User userToSave3;
-
     @BeforeAll
     @SuppressWarnings("resource")
     public static void startRedisContainer() {
@@ -65,17 +60,6 @@ public class UserServiceRedisTest {
         } catch (Exception e) {
             LOG.error("Starting of Redis container failed with following message: " + e.getMessage());
         }
-    }
-
-    /**
-     * Some save operations may set the user ID.
-     * It is necessary to reset the ID back to null to prevent further problems.
-     */
-    @BeforeEach
-    public void resetUsersToSave() {
-        userToSave1 = USER_TO_SAVE_1.clone();
-        userToSave2 = USER_TO_SAVE_2.clone();
-        userToSave3 = USER_TO_SAVE_3.clone();
     }
 
     @AfterEach
@@ -110,7 +94,7 @@ public class UserServiceRedisTest {
 
     @Test
     public void Should_SaveUser_When_UserIsValid() {
-        User user = userService.saveUser(userToSave1);
+        User user = userService.saveUser(USER_TO_SAVE_1);
         assertEquals(1L, userRepository.count());
         assertEquals(PERSISTED_USER_1, user);
     }
@@ -187,18 +171,18 @@ public class UserServiceRedisTest {
 
     @Test
     public void Should_SaveUserWithUniqueIdInCache_When_SaveUserIsCalled() {
-        User user1 = userService.saveUser(userToSave1);
+        User user1 = userService.saveUser(USER_TO_SAVE_1);
         assertNotNull(Objects.requireNonNull(cacheManager.getCache(USERS_CACHE_NAME)).get(user1.getId()));
-        User user2 = userService.saveUser(userToSave2);
+        User user2 = userService.saveUser(USER_TO_SAVE_2);
         assertNotNull(Objects.requireNonNull(cacheManager.getCache(USERS_CACHE_NAME)).get(user2.getId()));
-        User user3 = userService.saveUser(userToSave3);
+        User user3 = userService.saveUser(USER_TO_SAVE_3);
         assertNotNull(Objects.requireNonNull(cacheManager.getCache(USERS_CACHE_NAME)).get(user3.getId()));
     }
 
     @Test
     public void Should_DeleteUserWithUniqueIdFromCache_When_DeleteUserIsCalled() {
-        User user1 = userService.saveUser(userToSave1);
-        User user2 = userService.saveUser(userToSave2);
+        User user1 = userService.saveUser(USER_TO_SAVE_1);
+        User user2 = userService.saveUser(USER_TO_SAVE_2);
         userService.deleteUser(user1.getId());
         assertNull(Objects.requireNonNull(cacheManager.getCache(USERS_CACHE_NAME)).get(user1.getId()));
         userService.deleteUser(user2.getId());
@@ -206,8 +190,8 @@ public class UserServiceRedisTest {
     }
 
     private void saveUsersToDatabase() {
-        userRepository.save(userToSave1);
-        userRepository.save(userToSave2);
-        userRepository.save(userToSave3);
+        userRepository.save(USER_TO_SAVE_1);
+        userRepository.save(USER_TO_SAVE_2);
+        userRepository.save(USER_TO_SAVE_3);
     }
 }

@@ -4,7 +4,6 @@ import com.example.demo.models.User;
 import com.example.demo.repositories.UserRepository;
 import com.example.demo.services.impl.UserServiceTransactional;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
@@ -32,21 +31,6 @@ public class UserServiceTransactionalTest {
 
     @Autowired
     private UserServiceTransactional userService;
-
-    private User userToSave1;
-    private User userToSave2;
-    private User userToSave3;
-
-    /**
-     * Some save operations may set the user ID.
-     * It is necessary to reset the ID back to null to prevent further problems.
-     */
-    @BeforeEach
-    public void resetUsersToSave() {
-        userToSave1 = USER_TO_SAVE_1.clone();
-        userToSave2 = USER_TO_SAVE_2.clone();
-        userToSave3 = USER_TO_SAVE_3.clone();
-    }
 
     @AfterEach
     public void resetDatabase(ApplicationContext applicationContext) throws SQLException {
@@ -85,7 +69,7 @@ public class UserServiceTransactionalTest {
 
     @Test
     public void Should_SaveUser_When_UserIsValid() {
-        User user = userService.saveUser(userToSave1);
+        User user = userService.saveUser(USER_TO_SAVE_1);
         assertEquals(1L, userRepository.count());
         assertEquals(PERSISTED_USER_1, user);
     }
@@ -116,7 +100,7 @@ public class UserServiceTransactionalTest {
 
     @Test
     public void Should_SaveAllUsers_When_UsersAreValid() {
-        userService.saveUsers(List.of(userToSave1, userToSave2, userToSave3));
+        userService.saveUsers(List.of(USER_TO_SAVE_1, USER_TO_SAVE_2, USER_TO_SAVE_3));
         List<User> users = userService.listUsers();
         assertEquals(List.of(PERSISTED_USER_1, PERSISTED_USER_2, PERSISTED_USER_3), users);
     }
@@ -130,9 +114,9 @@ public class UserServiceTransactionalTest {
     @Test
     public void Should_NotSaveAnyUsersAndThrowInvalidDataAccessApiUsageException_When_SomeUsersAreNull() {
         List<User> usersToSave = new ArrayList<>() {{
-            add(userToSave1);
+            add(USER_TO_SAVE_1);
             add(null);
-            add(userToSave3);
+            add(USER_TO_SAVE_3);
         }};
         assertThrows(InvalidDataAccessApiUsageException.class, () -> userService.saveUsers(usersToSave));
         assertEquals(0L, userRepository.count());
@@ -141,8 +125,8 @@ public class UserServiceTransactionalTest {
     @Test
     public void Should_NotSaveAnyUsersAndThrowDataIntegrityViolationException_When_SomeUsersFirstNameIsNull() {
         List<User> usersToSave = new ArrayList<>() {{
-            add(userToSave1);
-            add(userToSave2);
+            add(USER_TO_SAVE_1);
+            add(USER_TO_SAVE_2);
             add(USER_WITHOUT_FIRST_NAME);
         }};
         assertThrows(DataIntegrityViolationException.class, () -> userService.saveUsers(usersToSave));
@@ -152,8 +136,8 @@ public class UserServiceTransactionalTest {
     @Test
     public void Should_NotSaveAnyUsersAndThrowDataIntegrityViolationException_When_SomeUsersLastNameIsNull() {
         List<User> usersToSave = new ArrayList<>() {{
-            add(userToSave2);
-            add(userToSave3);
+            add(USER_TO_SAVE_2);
+            add(USER_TO_SAVE_3);
             add(USER_WITHOUT_LAST_NAME);
         }};
         assertThrows(DataIntegrityViolationException.class, () -> userService.saveUsers(usersToSave));
@@ -163,8 +147,8 @@ public class UserServiceTransactionalTest {
     @Test
     public void Should_NotSaveAnyUsersAndThrowDataIntegrityViolationException_When_SomeUsersGenderIsNull() {
         List<User> usersToSave = new ArrayList<>() {{
-            add(userToSave3);
-            add(userToSave1);
+            add(USER_TO_SAVE_3);
+            add(USER_TO_SAVE_1);
             add(USER_WITHOUT_GENDER);
         }};
         assertThrows(DataIntegrityViolationException.class, () -> userService.saveUsers(usersToSave));
@@ -240,8 +224,8 @@ public class UserServiceTransactionalTest {
     }
 
     private void saveUsersToDatabase() {
-        userRepository.save(userToSave1);
-        userRepository.save(userToSave2);
-        userRepository.save(userToSave3);
+        userRepository.save(USER_TO_SAVE_1);
+        userRepository.save(USER_TO_SAVE_2);
+        userRepository.save(USER_TO_SAVE_3);
     }
 }
