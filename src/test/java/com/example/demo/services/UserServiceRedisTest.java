@@ -54,17 +54,8 @@ public class UserServiceRedisTest {
     private User userToSave3;
 
     @BeforeAll
-    @SuppressWarnings("resource")
-    public static void startRedisContainer() {
-        try {
-            int redisPort = Integer.parseInt(System.getProperty("redis.port", "6379"));
-            GenericContainer<?> redisContainer = new GenericContainer<>(DockerImageName.parse("redis:latest")).withExposedPorts(redisPort);
-            redisContainer.start();
-            System.setProperty("spring.data.redis.host", redisContainer.getHost());
-            System.setProperty("spring.data.redis.port", redisContainer.getMappedPort(redisPort).toString());
-        } catch (Exception e) {
-            LOG.error("Starting of Redis container failed with following message: " + e.getMessage());
-        }
+    public static void setUpContainers() {
+        startRedisContainer();
     }
 
     /**
@@ -209,5 +200,18 @@ public class UserServiceRedisTest {
         userRepository.save(userToSave1);
         userRepository.save(userToSave2);
         userRepository.save(userToSave3);
+    }
+
+    @SuppressWarnings("resource")
+    private static void startRedisContainer() {
+        try {
+            int redisPort = Integer.parseInt(System.getProperty("redis.port", "6379"));
+            GenericContainer<?> redisContainer = new GenericContainer<>(DockerImageName.parse("redis:latest")).withExposedPorts(redisPort);
+            redisContainer.start();
+            System.setProperty("spring.data.redis.host", redisContainer.getHost());
+            System.setProperty("spring.data.redis.port", redisContainer.getMappedPort(redisPort).toString());
+        } catch (Exception e) {
+            LOG.error("An exception occurred during starting of Redis container: {}", e.getMessage(), e);
+        }
     }
 }
