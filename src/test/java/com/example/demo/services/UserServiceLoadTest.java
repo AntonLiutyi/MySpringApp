@@ -5,6 +5,7 @@ import com.example.demo.repositories.UserRepository;
 import com.example.demo.services.impl.UserServiceRedis;
 import com.example.demo.services.impl.UserServiceTransactional;
 import com.example.demo.services.util.UserServiceOperationThread;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
@@ -12,6 +13,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
 import org.testcontainers.containers.GenericContainer;
@@ -52,6 +54,12 @@ public class UserServiceLoadTest {
         startRedisContainer();
     }
 
+    @AfterEach
+    public void cleanupAndReset() {
+        cleanupCache();
+        resetDatabase();
+    }
+
     @Test
     public void testHighLoadPerformanceLinearScenario() {
         LOG.info("High load performance linear test is started.");
@@ -89,10 +97,6 @@ public class UserServiceLoadTest {
         endTime = System.nanoTime();
         elapsedTimeInMillis = (endTime - startTime) / 1_000_000;
         LOG.info("Elapsed time for non-cacheable service: {} milliseconds.", elapsedTimeInMillis);
-
-        // Delete all users from the database
-        userRepository.deleteAll();
-        assertEquals(0, userRepository.count());
 
         LOG.info("High load performance linear test is finished.");
     }
@@ -145,10 +149,6 @@ public class UserServiceLoadTest {
         // Wait until each thread is finished
         latch.await();
 
-        // Delete all users from the database
-        userRepository.deleteAll();
-        assertEquals(0, userRepository.count());
-
         LOG.info("High load performance multithreaded test is finished.");
     }
 
@@ -195,5 +195,16 @@ public class UserServiceLoadTest {
         } catch (Exception e) {
             LOG.error("An exception occurred during starting of Redis container: {}", e.getMessage(), e);
         }
+    }
+
+    private void cleanupCache() {
+        cacheManager.getCacheNames().forEach(cacheName -> {
+            Cache cache = Objects.requireNonNull(cacheManager.getCache(cacheName));
+            cache.clear();
+        });
+    }
+
+    private void resetDatabase() {
+        userRepository.deleteAll();
     }
 }
