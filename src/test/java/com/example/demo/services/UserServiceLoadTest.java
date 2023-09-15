@@ -7,7 +7,6 @@ import com.example.demo.services.impl.UserServiceTransactional;
 import com.example.demo.services.util.UserServiceOperationThread;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -29,7 +28,6 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @EnableCaching
 @SpringBootTest
-@Disabled
 public class UserServiceLoadTest {
 
     @Autowired
