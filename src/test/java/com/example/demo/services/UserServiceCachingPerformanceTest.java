@@ -29,7 +29,7 @@ import static org.testcontainers.containers.MySQLContainer.MYSQL_PORT;
 
 @EnableCaching
 @SpringBootTest
-public class UserServiceLoadTest {
+public class UserServiceCachingPerformanceTest {
 
     @Autowired
     private UserRepository userRepository;
@@ -43,7 +43,7 @@ public class UserServiceLoadTest {
     @Autowired
     private CacheManager cacheManager;
 
-    private static final Logger LOG = LoggerFactory.getLogger(UserServiceLoadTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(UserServiceCachingPerformanceTest.class);
     private static final String USERS_CACHE_NAME = "users";
     private static final String USERS_CACHE_KEY = "all";
 
@@ -60,8 +60,8 @@ public class UserServiceLoadTest {
     }
 
     @Test
-    public void testHighLoadPerformanceLinearScenario() {
-        LOG.info("High load performance linear test is started.");
+    public void testCachingPerformanceLinearScenario() {
+        LOG.info("Caching performance linear test is started.");
 
         int numberOfUsers = 100;
         int numberOfCycles = 1000;
@@ -97,12 +97,12 @@ public class UserServiceLoadTest {
         elapsedTimeInMillis = (endTime - startTime) / 1_000_000;
         LOG.info("Elapsed time for non-cacheable service: {} milliseconds.", elapsedTimeInMillis);
 
-        LOG.info("High load performance linear test is finished.");
+        LOG.info("Caching performance linear test is finished.");
     }
 
     @Test
-    public void testHighLoadPerformanceMultithreadedScenario() throws InterruptedException {
-        LOG.info("High load performance multithreaded test is started.");
+    public void testCachingPerformanceMultithreadedScenario() throws InterruptedException {
+        LOG.info("Caching performance multithreaded test is started.");
 
         int numberOfUsers = 100;
         int numberOfThreads = 11;
@@ -148,7 +148,7 @@ public class UserServiceLoadTest {
         // Wait until each thread is finished
         latch.await();
 
-        LOG.info("High load performance multithreaded test is finished.");
+        LOG.info("Caching performance multithreaded test is finished.");
     }
 
     private void saveUsersToDatabase(int numberOfUsers) {
