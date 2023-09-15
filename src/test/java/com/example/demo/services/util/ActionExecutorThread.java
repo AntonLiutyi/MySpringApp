@@ -6,9 +6,9 @@ import org.slf4j.LoggerFactory;
 import java.util.concurrent.CountDownLatch;
 import java.util.function.Supplier;
 
-public class UserServiceOperationThread extends Thread {
+public class ActionExecutorThread extends Thread {
 
-    private static final Logger LOG = LoggerFactory.getLogger(UserServiceOperationThread.class);
+    private static final Logger LOG = LoggerFactory.getLogger(ActionExecutorThread.class);
 
     private final CountDownLatch latch;
     private final int numberOfCycles;
@@ -17,7 +17,7 @@ public class UserServiceOperationThread extends Thread {
     private int operationsCount = 0;
     private long elapsedTimeInMillis = 0;
 
-    public UserServiceOperationThread(CountDownLatch latch, int numberOfCycles, double probability, Supplier<Void> action) {
+    public ActionExecutorThread(CountDownLatch latch, int numberOfCycles, double probability, Supplier<Void> action) {
         this.latch = latch;
         this.numberOfCycles = numberOfCycles;
         this.probability = probability;

@@ -4,7 +4,7 @@ import com.example.demo.models.User;
 import com.example.demo.repositories.UserRepository;
 import com.example.demo.services.impl.UserServiceRedis;
 import com.example.demo.services.impl.UserServiceTransactional;
-import com.example.demo.services.util.UserServiceOperationThread;
+import com.example.demo.services.util.ActionExecutorThread;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -128,7 +128,7 @@ public class UserServiceLoadTest {
         for (int i = 0; i < numberOfThreads - 1; i++) {
             UserService service = i % 2 == 0 ? userServiceRedis : userServiceTransactional;
             String suffix = i % 2 == 0 ? "cacheable" : "non-cacheable";
-            UserServiceOperationThread listUsersThread = new UserServiceOperationThread(latch, numberOfCycles, listUsersProbability, () -> {
+            ActionExecutorThread listUsersThread = new ActionExecutorThread(latch, numberOfCycles, listUsersProbability, () -> {
                 service.listUsers();
                 return null;
             });
@@ -137,7 +137,7 @@ public class UserServiceLoadTest {
         }
 
         // Start thread that will call the saveUser method
-        UserServiceOperationThread saveUserThread = new UserServiceOperationThread(latch, numberOfCycles, saveUserProbability, () -> {
+        ActionExecutorThread saveUserThread = new ActionExecutorThread(latch, numberOfCycles, saveUserProbability, () -> {
             userServiceRedis.saveUser(createNewUser());
             userServiceRedis.reloadUsers();
             return null;
