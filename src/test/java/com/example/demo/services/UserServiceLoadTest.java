@@ -25,6 +25,7 @@ import java.util.concurrent.CountDownLatch;
 
 import static com.example.demo.services.util.UserServiceTestUtil.USER_TO_SAVE_3;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.testcontainers.containers.MySQLContainer.MYSQL_PORT;
 
 @EnableCaching
 @SpringBootTest
@@ -163,19 +164,10 @@ public class UserServiceLoadTest {
     @SuppressWarnings("resource")
     private static void startMysqlContainer() {
         try {
-            int mysqlPort = Integer.parseInt(System.getProperty("mysql.port", "3306"));
-            String dbName = System.getProperty("db.schema", "test_db");
-            String username = System.getProperty("db.user", "test");
-            String password = System.getProperty("db.password", "test");
             MySQLContainer<?> mysqlContainer = new MySQLContainer<>(DockerImageName.parse("mysql:latest"))
-                    .withExposedPorts(mysqlPort)
-                    .withDatabaseName(dbName)
-                    .withUsername(username)
-                    .withPassword(password);
+                    .withExposedPorts(MYSQL_PORT);
             mysqlContainer.start();
             System.setProperty("spring.datasource.url", mysqlContainer.getJdbcUrl());
-            System.setProperty("spring.datasource.username", mysqlContainer.getUsername());
-            System.setProperty("spring.datasource.password", mysqlContainer.getPassword());
         } catch (Exception e) {
             LOG.error("An exception occurred during starting of MySQL container: {}", e.getMessage(), e);
         }
@@ -184,11 +176,10 @@ public class UserServiceLoadTest {
     @SuppressWarnings("resource")
     private static void startRedisContainer() {
         try {
-            int redisPort = Integer.parseInt(System.getProperty("redis.port", "6379"));
+            int redisPort = 6379;
             GenericContainer<?> redisContainer = new GenericContainer<>(DockerImageName.parse("redis:latest"))
                     .withExposedPorts(redisPort);
             redisContainer.start();
-            System.setProperty("spring.data.redis.host", redisContainer.getHost());
             System.setProperty("spring.data.redis.port", redisContainer.getMappedPort(redisPort).toString());
         } catch (Exception e) {
             LOG.error("An exception occurred during starting of Redis container: {}", e.getMessage(), e);
