@@ -18,6 +18,7 @@ import org.springframework.cache.annotation.EnableCaching;
 import org.springframework.context.ApplicationContext;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
+import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.utility.DockerImageName;
 
@@ -33,6 +34,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @EnableCaching
 @SpringBootTest
+@ActiveProfiles("test")
 @AutoConfigureTestDatabase
 public class UserServiceRedisTest {
 

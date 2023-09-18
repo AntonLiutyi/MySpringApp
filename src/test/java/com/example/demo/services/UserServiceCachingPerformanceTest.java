@@ -15,6 +15,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.test.context.ActiveProfiles;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.MySQLContainer;
 import org.testcontainers.utility.DockerImageName;
@@ -29,6 +30,7 @@ import static org.testcontainers.containers.MySQLContainer.MYSQL_PORT;
 
 @EnableCaching
 @SpringBootTest
+@ActiveProfiles("test")
 public class UserServiceCachingPerformanceTest {
 
     @Autowired
