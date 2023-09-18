@@ -4,10 +4,9 @@ import com.example.demo.models.User;
 import com.example.demo.repositories.UserRepository;
 import com.example.demo.services.impl.UserServiceRedis;
 import com.example.demo.services.impl.UserServiceTransactional;
-import com.example.demo.services.util.UserServiceOperationThread;
+import com.example.demo.services.util.ActionExecutorThread;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,11 +25,11 @@ import java.util.concurrent.CountDownLatch;
 
 import static com.example.demo.services.util.UserServiceTestUtil.USER_TO_SAVE_3;
 import static org.junit.jupiter.api.Assertions.*;
+import static org.testcontainers.containers.MySQLContainer.MYSQL_PORT;
 
 @EnableCaching
 @SpringBootTest
-@Disabled
-public class UserServiceLoadTest {
+public class UserServiceCachingPerformanceTest {
 
     @Autowired
     private UserRepository userRepository;
@@ -44,7 +43,7 @@ public class UserServiceLoadTest {
     @Autowired
     private CacheManager cacheManager;
 
-    private static final Logger LOG = LoggerFactory.getLogger(UserServiceLoadTest.class);
+    private static final Logger LOG = LoggerFactory.getLogger(UserServiceCachingPerformanceTest.class);
     private static final String USERS_CACHE_NAME = "users";
     private static final String USERS_CACHE_KEY = "all";
 
@@ -61,8 +60,8 @@ public class UserServiceLoadTest {
     }
 
     @Test
-    public void testHighLoadPerformanceLinearScenario() {
-        LOG.info("High load performance linear test is started.");
+    public void testCachingPerformanceLinearScenario() {
+        LOG.info("Caching performance linear test is started.");
 
         int numberOfUsers = 100;
         int numberOfCycles = 1000;
@@ -98,12 +97,12 @@ public class UserServiceLoadTest {
         elapsedTimeInMillis = (endTime - startTime) / 1_000_000;
         LOG.info("Elapsed time for non-cacheable service: {} milliseconds.", elapsedTimeInMillis);
 
-        LOG.info("High load performance linear test is finished.");
+        LOG.info("Caching performance linear test is finished.");
     }
 
     @Test
-    public void testHighLoadPerformanceMultithreadedScenario() throws InterruptedException {
-        LOG.info("High load performance multithreaded test is started.");
+    public void testCachingPerformanceMultithreadedScenario() throws InterruptedException {
+        LOG.info("Caching performance multithreaded test is started.");
 
         int numberOfUsers = 100;
         int numberOfThreads = 11;
@@ -129,7 +128,7 @@ public class UserServiceLoadTest {
         for (int i = 0; i < numberOfThreads - 1; i++) {
             UserService service = i % 2 == 0 ? userServiceRedis : userServiceTransactional;
             String suffix = i % 2 == 0 ? "cacheable" : "non-cacheable";
-            UserServiceOperationThread listUsersThread = new UserServiceOperationThread(latch, numberOfCycles, listUsersProbability, () -> {
+            ActionExecutorThread listUsersThread = new ActionExecutorThread(latch, numberOfCycles, listUsersProbability, () -> {
                 service.listUsers();
                 return null;
             });
@@ -138,7 +137,7 @@ public class UserServiceLoadTest {
         }
 
         // Start thread that will call the saveUser method
-        UserServiceOperationThread saveUserThread = new UserServiceOperationThread(latch, numberOfCycles, saveUserProbability, () -> {
+        ActionExecutorThread saveUserThread = new ActionExecutorThread(latch, numberOfCycles, saveUserProbability, () -> {
             userServiceRedis.saveUser(createNewUser());
             userServiceRedis.reloadUsers();
             return null;
@@ -149,7 +148,7 @@ public class UserServiceLoadTest {
         // Wait until each thread is finished
         latch.await();
 
-        LOG.info("High load performance multithreaded test is finished.");
+        LOG.info("Caching performance multithreaded test is finished.");
     }
 
     private void saveUsersToDatabase(int numberOfUsers) {
@@ -165,19 +164,10 @@ public class UserServiceLoadTest {
     @SuppressWarnings("resource")
     private static void startMysqlContainer() {
         try {
-            int mysqlPort = Integer.parseInt(System.getProperty("mysql.port", "3306"));
-            String dbName = System.getProperty("db.schema", "test_db");
-            String username = System.getProperty("db.user", "test");
-            String password = System.getProperty("db.password", "test");
             MySQLContainer<?> mysqlContainer = new MySQLContainer<>(DockerImageName.parse("mysql:latest"))
-                    .withExposedPorts(mysqlPort)
-                    .withDatabaseName(dbName)
-                    .withUsername(username)
-                    .withPassword(password);
+                    .withExposedPorts(MYSQL_PORT);
             mysqlContainer.start();
             System.setProperty("spring.datasource.url", mysqlContainer.getJdbcUrl());
-            System.setProperty("spring.datasource.username", mysqlContainer.getUsername());
-            System.setProperty("spring.datasource.password", mysqlContainer.getPassword());
         } catch (Exception e) {
             LOG.error("An exception occurred during starting of MySQL container: {}", e.getMessage(), e);
         }
@@ -186,11 +176,10 @@ public class UserServiceLoadTest {
     @SuppressWarnings("resource")
     private static void startRedisContainer() {
         try {
-            int redisPort = Integer.parseInt(System.getProperty("redis.port", "6379"));
+            int redisPort = 6379;
             GenericContainer<?> redisContainer = new GenericContainer<>(DockerImageName.parse("redis:latest"))
                     .withExposedPorts(redisPort);
             redisContainer.start();
-            System.setProperty("spring.data.redis.host", redisContainer.getHost());
             System.setProperty("spring.data.redis.port", redisContainer.getMappedPort(redisPort).toString());
         } catch (Exception e) {
             LOG.error("An exception occurred during starting of Redis container: {}", e.getMessage(), e);
