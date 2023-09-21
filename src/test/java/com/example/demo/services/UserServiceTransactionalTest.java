@@ -12,6 +12,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.ApplicationContext;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.InvalidDataAccessApiUsageException;
+import org.springframework.test.context.ActiveProfiles;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -24,6 +25,7 @@ import static com.example.demo.services.util.UserServiceTestUtil.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
+@ActiveProfiles("test")
 @AutoConfigureTestDatabase
 public class UserServiceTransactionalTest {
 
